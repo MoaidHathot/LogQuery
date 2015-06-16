@@ -19,6 +19,7 @@ namespace LogQuery.DataAccess.Configuration
             {
                 var settings = new XmlWriterSettings();
                 settings.Indent = true;
+                settings.Encoding = Encoding.UTF8;
 
                 using (var xmlWriter = XmlWriter.Create(stringWriter, settings))
                 {

@@ -18,6 +18,20 @@ namespace LogQuery.DataAccess.Log
             _patternConfiguration = patternConfiguration;
         }
 
+        private RegexOptions GenerateRegexOptions(LogPattern pattern)
+        {
+            var options = RegexOptions.None;
+
+            if (!pattern.IsCaseSensitive)
+            {
+                options |= RegexOptions.IgnoreCase;
+            }
+
+            options |= (pattern.IsSingleLine ? RegexOptions.Singleline : RegexOptions.Multiline);
+
+            return options;
+        }
+
         public Dictionary<LogPattern, List<List<KeyValuePair<LogPatternMember, string>>>> ParseLog()
         {
             var results = new Dictionary<LogPattern, List<List<KeyValuePair<LogPatternMember, string>>>>();
@@ -26,7 +40,9 @@ namespace LogQuery.DataAccess.Log
             {
                 foreach (var pattern in _patternConfiguration.Patterns)
                 {
-                    var match = Regex.Match(line, pattern.RegularExpression);
+                    var options = GenerateRegexOptions(pattern);
+
+                    var match = Regex.Match(line, pattern.RegularExpression, options);
 
                     if (match.Success)
                     {

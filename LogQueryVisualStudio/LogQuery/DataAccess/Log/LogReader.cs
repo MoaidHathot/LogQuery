@@ -8,10 +8,18 @@ namespace LogQuery.DataAccess.Log
     public class LogReader : ILogReader
     {
         public string[] Files { get; set; }
+        public string Delimiter { get; set; }
 
         public LogReader(params string[] files)
+            : this(Environment.NewLine, files)
+        {
+
+        }
+
+        public LogReader(string delimiter, string[] files)
         {
             this.Files = files;
+            this.Delimiter = delimiter;
         }
 
         public IEnumerable<string> Lines
@@ -20,10 +28,16 @@ namespace LogQuery.DataAccess.Log
             {
                 foreach (var file in Files)
                 {
-                    foreach (var line in System.IO.File.ReadAllLines(file))
+                    var text = System.IO.File.ReadAllText(file);
+
+                    foreach (var line in text.Split(Delimiter.ToCharArray(), StringSplitOptions.RemoveEmptyEntries))
                     {
                         yield return line;
                     }
+                    //foreach (var line in System.IO.File.ReadAllLines(file))
+                    //{
+                    //    yield return line;
+                    //}
                 }
             }
         }
