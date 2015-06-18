@@ -15,19 +15,37 @@ namespace LogQuery.DataAccess.Configuration
         {
             var serializer = new XmlSerializer(typeof(T));
 
-            using (var stringWriter = new StringWriter())
+            //using (var stringWriter = new StringWriter())
+            //{
+            //    var settings = new XmlWriterSettings();
+            //    settings.Indent = true;
+            //    settings.Encoding = Encoding.UTF8;
+
+            //    using (var xmlWriter = XmlWriter.Create(stringWriter, settings))
+            //    {
+            //        serializer.Serialize(xmlWriter, configuration);
+
+            //        return stringWriter.ToString();
+            //    }
+            //}
+
+            using (var memoryStream = new MemoryStream())
             {
                 var settings = new XmlWriterSettings();
-                settings.Indent = true;
                 settings.Encoding = Encoding.UTF8;
+                settings.Indent = true;
+                settings.IndentChars = "\t";
+                settings.NewLineChars = Environment.NewLine;
+                settings.ConformanceLevel = ConformanceLevel.Document;
 
-                using (var xmlWriter = XmlWriter.Create(stringWriter, settings))
+                using (var writer = XmlTextWriter.Create(memoryStream, settings))
                 {
-                    serializer.Serialize(xmlWriter, configuration);
+                    serializer.Serialize(writer, configuration);
 
-                    return stringWriter.ToString();
+                    return Encoding.UTF8.GetString(memoryStream.ToArray());
                 }
             }
+
         }
 
         public T Deserialize(string xmlContent)

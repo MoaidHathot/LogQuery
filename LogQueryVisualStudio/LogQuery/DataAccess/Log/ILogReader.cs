@@ -7,6 +7,6 @@ namespace LogQuery.DataAccess.Log
 {
     public interface ILogReader
     {
-        IEnumerable<string> Lines { get; }
+        IEnumerable<LogLineContext> Lines { get; }
     }
 }

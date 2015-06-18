@@ -7,8 +7,8 @@ namespace LogQuery.DataAccess.Log
 {
     public class LogConstants
     {
-        public const string EndOfTextCharString = "\u0003";
-        public const string NewLineString = "\r\n";
+        public const string EndOfText = @"\u0003";
+        public const string EndOfLine = @"\r\n";
 
     }
 }

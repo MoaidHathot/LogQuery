@@ -67,6 +67,7 @@
     <Compile Include="DataAccess\Configuration\IConfigurationSerializer.cs" />
     <Compile Include="DataAccess\Configuration\LogPatternConfiguration.cs" />
     <Compile Include="DataAccess\Database\IDatabaseDriver.cs" />
+    <Compile Include="DataAccess\Log\LogLineContext.cs" />
     <Compile Include="DataAccess\Log\LogConstants.cs" />
     <Compile Include="DataAccess\Log\LogParser.cs" />
     <Compile Include="DataAccess\Database\IQueryGenerator.cs" />

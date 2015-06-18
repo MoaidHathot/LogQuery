@@ -22,17 +22,21 @@ namespace LogQuery.DataAccess.Log
             this.Delimiter = delimiter;
         }
 
-        public IEnumerable<string> Lines
+        public IEnumerable<LogLineContext> Lines
         {
             get
             {
+                var globalLine = 0L;
+
                 foreach (var file in Files)
                 {
                     var text = System.IO.File.ReadAllText(file);
 
+                    var logLine = 0L;
+
                     foreach (var line in text.Split(Delimiter.ToCharArray(), StringSplitOptions.RemoveEmptyEntries))
                     {
-                        yield return line;
+                        yield return new LogLineContext { Message = line, LogFile = file, LogFileLine = logLine++, GlobalFileLine = globalLine++ };
                     }
                     //foreach (var line in System.IO.File.ReadAllLines(file))
                     //{

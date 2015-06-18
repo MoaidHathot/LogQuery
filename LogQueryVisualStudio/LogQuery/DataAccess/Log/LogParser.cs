@@ -32,9 +32,9 @@ namespace LogQuery.DataAccess.Log
             return options;
         }
 
-        public Dictionary<LogPattern, List<List<KeyValuePair<LogPatternMember, string>>>> ParseLog()
+        public Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>> ParseLog()
         {
-            var results = new Dictionary<LogPattern, List<List<KeyValuePair<LogPatternMember, string>>>>();
+            var results = new Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>>();
 
             foreach (var line in _logReader.Lines)
             {
@@ -42,22 +42,23 @@ namespace LogQuery.DataAccess.Log
                 {
                     var options = GenerateRegexOptions(pattern);
 
-                    var match = Regex.Match(line, pattern.RegularExpression, options);
+                    var match = Regex.Match(line.Message, pattern.RegularExpression, options);
 
                     if (match.Success)
                     {
                         if (!results.ContainsKey(pattern))
                         {
-                            results[pattern] = new List<List<KeyValuePair<LogPatternMember, string>>>();
+                            results[pattern] = new List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>();
                         }
 
                         var list = results[pattern];
 
-                        var row = new List<KeyValuePair<LogPatternMember, string>>();
+                        var row = new KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>(line, new List<KeyValuePair<LogPatternMember, string>>());
 
                         foreach (var member in pattern.Members)
                         {
-                            row.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
+                            row.Value.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
+                            //row.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
                         }
 
                         list.Add(row);

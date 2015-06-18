@@ -25,7 +25,7 @@ namespace LogQuery.DataAccess.Configuration
         public string DelimiterSerializer { get { return _delimiter; } set { _delimiter = value; } }
 
         [XmlIgnore]
-        public string Delimiter { get { return UnEscape(DelimiterSerializer); } set { DelimiterSerializer = value; } }
+        public string Delimiter { get { return UnEscape(DelimiterSerializer); } }
 
         private LogPatternConfiguration()
         {
@@ -35,7 +35,7 @@ namespace LogQuery.DataAccess.Configuration
         {
             this.Name = name;
             this.Patterns = patterns;
-            this.Delimiter = Escape(delimiter);
+            this._delimiter = delimiter;
         }
 
         private string Escape(string s)

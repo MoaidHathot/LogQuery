@@ -25,9 +25,9 @@ namespace LogQueryVisualStudio
             //var text = System.IO.File.ReadLines(@"D:\Tinkoff\Test\Snippet.lqc").ToArray();
 
             //var lines = text.Split(("\u0003").ToCharArray(), StringSplitOptions.RemoveEmptyEntries).Select( l => l.TrimStart());
-            
-            //Console.WriteLine("Press enter to quit.");
-            //Console.ReadLine();
+
+            Console.WriteLine("Press enter to quit.");
+            Console.ReadLine();
         }
 
         static void Test()
@@ -36,67 +36,76 @@ namespace LogQueryVisualStudio
             var logsDirectory = @"D:\Tinkoff\Test";
 
             var allWatch = Stopwatch.StartNew();
+            var watch = new Stopwatch();
+
+            var imported = ExportImportConfiguration(configurationPath, LogConstants.EndOfText);
+
+            Console.WriteLine("Creating dataset...");
+            watch.Restart();
+            var set = CreateDataSet(imported);
+            watch.Stop();
+            Console.WriteLine("Dataset is created. Elapsed: {0}", watch.Elapsed);
+
+            Console.WriteLine("Generating creation query...");
+            watch.Restart();
+            var queryGenerator = new SqlServerQueryGenerator();
+            var query = queryGenerator.GenerateCreateQuery(set: set, createTablesIfNotExists: false);
+            watch.Stop();
+            Console.WriteLine("Query is generated. Elapsed: {0}", watch.Elapsed);
+
+            Console.WriteLine("Creating schema...");
+            watch.Restart();
+            var driver = new ManualDatabaseDriver(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True");
+            driver.CretaeSchema(set);
+            watch.Stop();
+            Console.WriteLine("Schema is created. Elapsed: {0}", watch.Elapsed);
+
+            var reader = LogReader.FromDirectory(logsDirectory);
+            var parser = new LogParser(reader, imported);
+
+            Console.WriteLine("Parsing log...");
+            watch.Restart();
+            var parsedResults = parser.ParseLog();
+            watch.Stop();
+            Console.WriteLine("Log is parsed. Elapsed: {0}", watch.Elapsed);
+
+            Console.WriteLine("Structuring results...");
+            watch.Restart();
+            FillDataSet(set, parsedResults);
+            watch.Stop();
+            Console.WriteLine("Results are structured. Elapsed: {0}", watch.Elapsed);
+
+            Console.WriteLine("Saving results to db...");
+            watch.Restart();
+            driver.Save(set);
+            watch.Stop();
+            Console.WriteLine("results are saved to db. Elapsed: {0}", watch.Elapsed);
+
+            allWatch.Stop();
+            Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
+
+            PrintStatistics(set);
+        }
+
+        static LogPatternConfiguration ExportImportConfiguration(string path, string delimiter)
+        {
+            
+            var manager = new ConfigurationManager<LogPatternConfiguration>(new ConfigurationXmlSerializer<LogPatternConfiguration>());
 
             Console.WriteLine("Exporting data...");
             var watch = Stopwatch.StartNew();
-            var manager = new ConfigurationManager<LogPatternConfiguration>(new ConfigurationXmlSerializer<LogPatternConfiguration>());
-            var exported = GetTestPatternConfiguartion(LogConstants.EndOfTextCharString);
-            manager.Export(configurationPath, exported);
+            var exported = GetTestPatternConfiguartion(delimiter);
+            manager.Export(path, exported);
             watch.Stop();
             Console.WriteLine("Data is exported. Elapsed: {0}", watch.Elapsed);
 
             Console.WriteLine("Importing data...");
             watch.Restart();
-            var imported = manager.Import(configurationPath);
-            //var imported = GetTestPatternConfiguartion();
+            var imported = manager.Import(path);
             watch.Stop();
             Console.WriteLine("Data is imported. Elapsed: {0}", watch.Elapsed);
 
-            //Console.WriteLine("Creating dataset...");
-            //watch.Restart();
-            //var set = CreateDataSet(imported);
-            //watch.Stop();
-            //Console.WriteLine("Dataset is created. Elapsed: {0}", watch.Elapsed);
-
-            //Console.WriteLine("Generating creation query...");
-            //watch.Restart();
-            //var queryGenerator = new SqlServerQueryGenerator();
-            //var query = queryGenerator.GenerateCreateQuery(set: set, createTablesIfNotExists: false);
-            //watch.Stop();
-            //Console.WriteLine("Query is generated. Elapsed: {0}", watch.Elapsed);
-
-            //Console.WriteLine("Creating schema...");
-            //watch.Restart();
-            //var driver = new ManualDatabaseDriver(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True");
-            //driver.CretaeSchema(set);
-            //watch.Stop();
-            //Console.WriteLine("Schema is created. Elapsed: {0}", watch.Elapsed);
-
-            //var reader = LogReader.FromDirectory(logsDirectory);
-            //var parser = new LogParser(reader, imported);
-
-            //Console.WriteLine("Parsing log...");
-            //watch.Restart();
-            //var parsedResults = parser.ParseLog();
-            //watch.Stop();
-            //Console.WriteLine("Log is parsed. Elapsed: {0}", watch.Elapsed);
-
-            //Console.WriteLine("Structuring results...");
-            //watch.Restart();
-            //FillDataSet(set, parsedResults);
-            //watch.Stop();
-            //Console.WriteLine("Results are structured. Elapsed: {0}", watch.Elapsed);
-
-            //Console.WriteLine("Saving results to db...");
-            //watch.Restart();
-            //driver.Save(set);
-            //watch.Stop();
-            //Console.WriteLine("results are saved to db. Elapsed: {0}", watch.Elapsed);
-
-            allWatch.Stop();
-            Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
-
-            //PrintStatistics(set);
+            return imported;
         }
 
         static void PrintStatistics(DataSet set)
@@ -107,7 +116,7 @@ namespace LogQueryVisualStudio
             }
         }
 
-        static void FillDataSet(DataSet set, Dictionary<LogPattern, List<List<KeyValuePair<LogPatternMember, string>>>> results)
+        static void FillDataSet(DataSet set, Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>> results)
         {
             var uniqueId = 0;
 
@@ -117,8 +126,11 @@ namespace LogQueryVisualStudio
 
                 foreach (var pairs in result.Value)
                 {
-                    var list = new List<object>(pairs.Select(p => AdaptActualType(p)).ToArray());
+                    var list = new List<object>(pairs.Value.Select(p => AdaptActualType(p)).ToArray());
                     list.Add(--uniqueId);
+                    list.Add(pairs.Key.LogFile);
+                    list.Add(pairs.Key.GlobalFileLine);
+                    list.Add(pairs.Key.LogFileLine);
 
                     table.Rows.Add(list.ToArray());
                 }
@@ -168,10 +180,22 @@ namespace LogQueryVisualStudio
                     column.AllowDBNull = false;
                 }
 
-                var idColumn = table.Columns.Add("__LogQueryID__", typeof(int));
+                var idColumn = table.Columns.Add("__LogQ_ID__", typeof(int));
                 idColumn.AllowDBNull = false;
                 idColumn.AutoIncrement = true;
                 idColumn.Unique = true;
+
+                var fileColumn = table.Columns.Add("__LogQ_File__", typeof(string));
+                fileColumn.AllowDBNull = false;
+                fileColumn.Unique = false;
+
+                var globalLineColumn = table.Columns.Add("__LogQ_GlobalLineIndex__", typeof(long));
+                globalLineColumn.AllowDBNull = false;
+                globalLineColumn.Unique = true;
+
+                var lineColumn = table.Columns.Add("__LogQ_LineIndex__", typeof(long));
+                lineColumn.AllowDBNull = false;
+                lineColumn.Unique = true;
             }
 
             return set;
