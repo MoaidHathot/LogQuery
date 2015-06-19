@@ -11,6 +11,7 @@ using LogQuery.DataAccess;
 using LogQuery.DataAccess.Database;
 using LogQuery.DataAccess.Configuration;
 using LogQuery.DataAccess.Log;
+using LogQuery.Logic;
 using LogQuery.Properties;
 
 namespace LogQueryVisualStudio
@@ -19,7 +20,8 @@ namespace LogQueryVisualStudio
     {
         static void Main(string[] args)
         {
-            Test();
+            TestEngine();
+            //TestManuall();
 
             //var text = System.IO.File.ReadAllText(@"D:\Tinkoff\Test\Snippet.lqc");
             //var text = System.IO.File.ReadLines(@"D:\Tinkoff\Test\Snippet.lqc").ToArray();
@@ -30,7 +32,30 @@ namespace LogQueryVisualStudio
             Console.ReadLine();
         }
 
-        static void Test()
+        static void TestEngine()
+        {
+            var allWatch = Stopwatch.StartNew();
+
+            var engine = new LogQueryEngine("Engine", @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True", FromDirectory(@"E:\Files\logs\LogQuery"), new string[] { @"E:\Files\logs\LogQuery\LogConfiguration.lqc" });
+            engine.Start();
+
+            allWatch.Stop();
+            Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
+
+            allWatch.Restart();
+            engine = new ParallelLogQueryEngine("Engine", @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True", FromDirectory(@"E:\Files\logs\LogQuery"), new string[] { @"E:\Files\logs\LogQuery\LogConfiguration.lqc" });
+            engine.Start();
+
+            allWatch.Stop();
+            Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
+        }
+
+        public static string[] FromDirectory(string directoryName)
+        {
+            return System.IO.Directory.GetFiles(directoryName).Select(f => new System.IO.FileInfo(f)).OrderBy(info => info.LastWriteTime).Select(info => info.FullName).ToArray();
+        }
+
+        static void TestManuall()
         {
             var configurationPath = @"D:\Tinkoff\Test\LogConfiguration.lqc";
             var logsDirectory = @"D:\Tinkoff\Test";
@@ -61,7 +86,7 @@ namespace LogQueryVisualStudio
             Console.WriteLine("Schema is created. Elapsed: {0}", watch.Elapsed);
 
             var reader = LogReader.FromDirectory(logsDirectory);
-            var parser = new LogParser(reader, imported);
+            var parser = new LogParser(reader, new[] { imported });
 
             Console.WriteLine("Parsing log...");
             watch.Restart();

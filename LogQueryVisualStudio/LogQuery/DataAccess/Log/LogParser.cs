@@ -10,9 +10,9 @@ namespace LogQuery.DataAccess.Log
     public class LogParser
     {
         private ILogReader _logReader;
-        private LogPatternConfiguration _patternConfiguration;
+        private IEnumerable<LogPatternConfiguration> _patternConfiguration;
 
-        public LogParser(ILogReader reader, LogPatternConfiguration patternConfiguration)
+        public LogParser(ILogReader reader, IEnumerable<LogPatternConfiguration> patternConfiguration)
         {
             _logReader = reader;
             _patternConfiguration = patternConfiguration;
@@ -38,30 +38,33 @@ namespace LogQuery.DataAccess.Log
 
             foreach (var line in _logReader.Lines)
             {
-                foreach (var pattern in _patternConfiguration.Patterns)
+                foreach (var configuration in _patternConfiguration)
                 {
-                    var options = GenerateRegexOptions(pattern);
-
-                    var match = Regex.Match(line.Message, pattern.RegularExpression, options);
-
-                    if (match.Success)
+                    foreach (var pattern in configuration.Patterns)
                     {
-                        if (!results.ContainsKey(pattern))
+                        var options = GenerateRegexOptions(pattern);
+
+                        var match = Regex.Match(line.Message, pattern.RegularExpression, options);
+
+                        if (match.Success)
                         {
-                            results[pattern] = new List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>();
+                            if (!results.ContainsKey(pattern))
+                            {
+                                results[pattern] = new List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>();
+                            }
+
+                            var list = results[pattern];
+
+                            var row = new KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>(line, new List<KeyValuePair<LogPatternMember, string>>());
+
+                            foreach (var member in pattern.Members)
+                            {
+                                row.Value.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
+                                //row.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
+                            }
+
+                            list.Add(row);
                         }
-
-                        var list = results[pattern];
-
-                        var row = new KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>(line, new List<KeyValuePair<LogPatternMember, string>>());
-
-                        foreach (var member in pattern.Members)
-                        {
-                            row.Value.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
-                            //row.Add(new KeyValuePair<LogPatternMember, string>(member, match.Groups[member.Index].Value));
-                        }
-
-                        list.Add(row);
                     }
                 }
             }
