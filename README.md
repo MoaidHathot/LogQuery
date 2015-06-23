@@ -1,4 +1,4 @@
-# LogQuery
+# LogQuery - work is in progress
 A tool that can parse logs and query them using SQL.
 
 (work is in progress)
