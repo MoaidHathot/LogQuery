@@ -18,9 +18,15 @@ namespace LogQueryVisualStudio
 {
     class Program
     {
+        public const string TestConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True";
+        //public const string TestConnectionString = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True";
+        public const string TestDirectory = @"D:\LogQuery";
+        public static readonly string[] TestConfigurations = { @"D:\LogQuery\LogConfiguration.lqc" };
         static void Main(string[] args)
         {
+            //AppDomain.CurrentDomain.SetData("DataDirectory", @"D:\DBs");
             TestEngine();
+            //ExportImportConfiguration(@"D:\LogQuery\LogConfiguration.lqc", LogConstants.EndOfText);
             //TestManuall();
 
             //var text = System.IO.File.ReadAllText(@"D:\Tinkoff\Test\Snippet.lqc");
@@ -36,15 +42,15 @@ namespace LogQueryVisualStudio
         {
             var allWatch = Stopwatch.StartNew();
 
-            var engine = new LogQueryEngine("Engine", @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True", FromDirectory(@"E:\Files\logs\LogQuery"), new string[] { @"E:\Files\logs\LogQuery\LogConfiguration.lqc" });
-            engine.Start();
+            //var engine = new LogQueryEngine("Engine", TestConnectionString, FromDirectory(TestDirectory), TestConfigurations);
+            //engine.Start();
 
-            allWatch.Stop();
-            Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
+            //allWatch.Stop();
+            //Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);
 
-            allWatch.Restart();
-            engine = new ParallelLogQueryEngine("Engine", @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True", FromDirectory(@"E:\Files\logs\LogQuery"), new string[] { @"E:\Files\logs\LogQuery\LogConfiguration.lqc" });
-            engine.Start();
+            //allWatch.Restart();
+            var parallelEngine = new ParallelLogQueryEngine("Engine", TestConnectionString, FromDirectory(TestDirectory), TestConfigurations);
+            parallelEngine.Start();
 
             allWatch.Stop();
             Console.WriteLine("Finished. Elapsed: {0}", allWatch.Elapsed);

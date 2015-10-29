@@ -120,7 +120,8 @@ namespace LogQuery.Logic
         {
             var set = new DataSet(name);
 
-            set.Namespace = "LogQuery_" + set.DataSetName + "_" + DateTime.Now.ToString().Replace('/', '_').Replace(':', '_').Replace(" ", "_");
+            //set.Namespace = set.DataSetName + "_" + DateTime.Now.ToString().Replace('/', '_').Replace(':', '_').Replace(" ", "_");
+            set.Namespace = set.DataSetName + "_" + DateTime.Now.ToString().Replace('/', '_').Replace(':', '_').Replace(" ", "_");
 
             foreach (var configuration in configuraitons)
             {

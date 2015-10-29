@@ -15,7 +15,7 @@ namespace LogQuery.DataAccess.Configuration
         [XmlAttribute("RegularExpression")]
         public string RegularExpression { get; set; }
 
-        [XmlElement("Members")]
+        [XmlElement("Member")]
         public LogPatternMember[] Members { get; set; }
 
         [XmlAttribute("IsCaseSensitive")]

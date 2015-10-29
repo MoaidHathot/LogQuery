@@ -15,7 +15,7 @@ namespace LogQuery.DataAccess.Configuration
         [XmlElement("Name")]
         public string Name { get; set; }
 
-        [XmlElement("Patterns")]
+        [XmlElement("Pattern")]
         public LogPattern[] Patterns { get; set; }
 
         [XmlIgnore]

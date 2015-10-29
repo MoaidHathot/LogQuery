@@ -44,14 +44,25 @@ namespace LogQuery.Logic
         {
             var configuration = await GetLogConfiguraitonsAsync(LogConfigurationFiles);
 
+            Console.WriteLine("Finished reading configuration");
+
             var setTask = CreateDataSetAsync(Name, configuration);
-            
+
             var schemaTask = setTask.ContinueWith((set) =>
             {
-                Task.WaitAll(CreateSchemaAsync(set.Result));
+                Console.WriteLine("Finished creating dataset");
+
+                CreateSchema(set.Result);
+
+                Console.WriteLine("Finished Creating Schemas.");
             });
+            
+            
+            //var schemaTastContinuation = schemaTask.ContinueWith((t) => Console.WriteLine("Finished creating schema"));
 
             var resultTask = ParseLogsAsync(LogFiles, configuration);
+
+            var resultTaskContinuation = resultTask.ContinueWith((t) => Console.WriteLine("Finished parsing"));
 
             Console.WriteLine("Waiting for tasks");
             Task.WaitAll(setTask, resultTask, schemaTask);
@@ -66,34 +77,34 @@ namespace LogQuery.Logic
             Console.WriteLine("Finished saving results to DB.");
         }
 
-        protected async virtual Task SaveToDatabaseAsync(DataSet set)
+        protected virtual Task SaveToDatabaseAsync(DataSet set)
         {
-            await Task.Factory.StartNew(() => SaveToDatabase(set));
+            return Task.Factory.StartNew(() => SaveToDatabase(set));
         }
 
-        protected async virtual Task FillDataSetAsync(DataSet set, Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>> parsedResults)
+        protected virtual Task FillDataSetAsync(DataSet set, Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>> parsedResults)
         {
-            await Task.Factory.StartNew(() => FillDataSet(set, parsedResults));
+            return Task.Factory.StartNew(() => FillDataSet(set, parsedResults));
         }
 
-        protected async virtual Task<Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>>> ParseLogsAsync(string[] logFiles, IEnumerable<LogPatternConfiguration> configurations)
+        protected virtual Task<Dictionary<LogPattern, List<KeyValuePair<LogLineContext, List<KeyValuePair<LogPatternMember, string>>>>>> ParseLogsAsync(string[] logFiles, IEnumerable<LogPatternConfiguration> configurations)
         {
-            return await Task.Factory.StartNew(() => ParseLogs(logFiles, configurations));
+            return Task.Factory.StartNew(() => ParseLogs(logFiles, configurations));
         }
 
-        protected async virtual Task CreateSchemaAsync(DataSet set)
+        protected virtual Task CreateSchemaAsync(DataSet set)
         {
-            await Task.Factory.StartNew(() => CreateSchema(set));
+            return Task.Factory.StartNew(() => CreateSchema(set));
         }
 
-        protected async virtual Task<DataSet> CreateDataSetAsync(string name, IEnumerable<LogPatternConfiguration> configuarations)
+        protected virtual Task<DataSet> CreateDataSetAsync(string name, IEnumerable<LogPatternConfiguration> configuarations)
         {
-            return await Task.Factory.StartNew(() => CreateDataSet(name, configuarations));
+            return Task.Factory.StartNew(() => CreateDataSet(name, configuarations));
         }
 
-        protected async virtual Task<IEnumerable<LogPatternConfiguration>> GetLogConfiguraitonsAsync(IEnumerable<string> configurationPaths)
+        protected virtual Task<IEnumerable<LogPatternConfiguration>> GetLogConfiguraitonsAsync(IEnumerable<string> configurationPaths)
         {
-            return await Task.Factory.StartNew(() => GetLogConfiguraitons(configurationPaths));
+            return Task.Factory.StartNew(() => GetLogConfiguraitons(configurationPaths));
         }
     }
 }

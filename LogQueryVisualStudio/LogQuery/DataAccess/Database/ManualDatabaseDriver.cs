@@ -22,14 +22,15 @@ namespace LogQuery.DataAccess.Database
         {
             using (var connection = new SqlConnection(_connectionString))
             {
-                var tables = new DataTable[set.Tables.Count];
-                set.Tables.CopyTo(tables, 0);
+                //var tables = new DataTable[set.Tables.Count];
+                //set.Tables.CopyTo(tables, 0);
 
                 connection.Open();
 
                 foreach (DataTable table in set.Tables)
                 {
                     //var selectQuery = tables.Select(t => string.Format("select * from {0}.{1}.{2} where 0 = 1", set.Namespace, t.Namespace, t.TableName)).Aggregate((a, b) => a + "; " + b);
+                    //var selectQuery = string.Format("select * from {0}.{1}.{2}", set.DataSetName, table.Namespace, table.TableName);
                     var selectQuery = string.Format("select * from {0}.{1}.{2}", set.Namespace, table.Namespace, table.TableName);
 
                     using (var adapter = new SqlDataAdapter(selectQuery, connection))
@@ -62,8 +63,9 @@ namespace LogQuery.DataAccess.Database
                         command.ExecuteNonQuery();
                     }
 
-                    connection.Close();
                 }
+
+                connection.Close();
             }
         }
     }
