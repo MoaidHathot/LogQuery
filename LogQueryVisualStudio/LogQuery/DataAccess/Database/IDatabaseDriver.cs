@@ -9,6 +9,6 @@ namespace LogQuery.DataAccess.Database
     public interface IDatabaseDriver
     {
         void Save(DataSet set);
-        void CretaeSchema(DataSet set);
+        void CretaeSchema(string outputFileName, DataSet set);
     }
 }

@@ -3,18 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Data;
+using System.IO;
 
 namespace LogQuery.DataAccess.Database
 {
     public class SqlServerQueryGenerator : IQueryGenerator
     {
-         public string[] GenerateCreateQuery(DataSet set, bool createDatabaseIfNotExists = true, bool createTablesIfNotExists = false, bool useGo = false)
+         public string[] GenerateCreateQuery(string outputFileName, DataSet set, bool createDatabaseIfNotExists = true, bool createTablesIfNotExists = false, bool useGo = false)
         {
             var list = new List<string>();
 
             if (createDatabaseIfNotExists)
             {
-                list.Add(string.Format(SqlServerQueryConstants.CreateDatabaseIfNotExistsFormat, set.Namespace) + (useGo? Environment.NewLine + "GO" : ""));
+                list.Add(string.Format(SqlServerQueryConstants.CreateDatabaseIfNotExistsFormat, set.Namespace, outputFileName) + (useGo? Environment.NewLine + "GO" : ""));
 
                 foreach (DataTable table in set.Tables)
                 {
@@ -135,7 +136,7 @@ namespace LogQuery.DataAccess.Database
         public const string UseDatabaseFormat = @"use {0}";
 
         public const string CreateDatabaseIfNotExistsFormat = @"IF db_id('{0}') IS NULL
-        create database {0}";
+        create database {0} ON (NAME = N'{0}', FILENAME = '{1}')";
 
         public const string CreateSchemaIfNotExistsFormat = @"IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{0}')
         BEGIN

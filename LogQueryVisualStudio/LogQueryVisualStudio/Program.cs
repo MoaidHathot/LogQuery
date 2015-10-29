@@ -18,14 +18,15 @@ namespace LogQueryVisualStudio
 {
     class Program
     {
-        public const string TestConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True";
-        //public const string TestConnectionString = @"Data Source=(LocalDB)\V11.0;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True";
-        public const string TestDirectory = @"D:\LogQuery";
-        public static readonly string[] TestConfigurations = { @"D:\LogQuery\LogConfiguration.lqc" };
+        //public const string TestConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True";
+        public const string TestConnectionString = @"Data Source=(LocalDB)\MSSQLLocalDB;Integrated Security=True";
+        public const string TestDirectory = @"E:\Files\logs\LogQuery\";
+        public static readonly string[] TestConfigurations = { @"E:\Files\logs\LogQuery\LogConfiguration.lqc" };
         static void Main(string[] args)
         {
             //AppDomain.CurrentDomain.SetData("DataDirectory", @"D:\DBs");
             TestEngine();
+            //ExportImportConfiguration(TestConfigurations.First(), LogConstants.EndOfLine);
             //ExportImportConfiguration(@"D:\LogQuery\LogConfiguration.lqc", LogConstants.EndOfText);
             //TestManuall();
 
@@ -80,14 +81,14 @@ namespace LogQueryVisualStudio
             Console.WriteLine("Generating creation query...");
             watch.Restart();
             var queryGenerator = new SqlServerQueryGenerator();
-            var query = queryGenerator.GenerateCreateQuery(set: set, createTablesIfNotExists: false);
+            var query = queryGenerator.GenerateCreateQuery(outputFileName: @"S:\testDB.mdf", set: set, createTablesIfNotExists: false);
             watch.Stop();
             Console.WriteLine("Query is generated. Elapsed: {0}", watch.Elapsed);
 
             Console.WriteLine("Creating schema...");
             watch.Restart();
             var driver = new ManualDatabaseDriver(@"Data Source=(LocalDB)\MSSQLLocalDB;AttachDbFilename=|DataDirectory|\LogDB.mdf;Integrated Security=True");
-            driver.CretaeSchema(set);
+            driver.CretaeSchema(@"S:\testDB.mdf", set);
             watch.Stop();
             Console.WriteLine("Schema is created. Elapsed: {0}", watch.Elapsed);
 
@@ -234,7 +235,7 @@ namespace LogQueryVisualStudio
 
         static LogPatternConfiguration GetTestPatternConfiguartion(string delimiter)
         {
-            return new LogPatternConfiguration("TestConfiguraiton", delimiter,
+            return new LogPatternConfiguration("TestConfiguration", delimiter,
 
                 new[]{
 
@@ -264,15 +265,15 @@ namespace LogQueryVisualStudio
                     ),
                     new LogPattern(
                         "StartAuthenticationRequestStarted",
-                        @"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3})\s*\|\s+[a-zA-Z]+\s+\|\s+([0-9a-zA-Z,# \-]+)\s+\|\s+\|\s+\|\s+RTIConnect\s*\|\s+RealTimeClientFacade\.StartAuthentication: --->>\[StartAuthentication\(info='Complete ID :'([0-9]+)',Interaction ID :'([0-9]+)',SiteID :'[0-9]+'', CustomerID='([0-9]+)'\)\]\[User='UserID: '([0-9]+)'",
+                        @"([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2},[0-9]{3})\s*\|\s+[a-zA-Z]+\s+\|\s+([0-9a-zA-Z,# \-]+)\s+\|\s+\|\s+\|\s+RTIConnect\s*\|\s+Wrapper\.FacadeMethod:\s+-+>>\[WCFClientFacade\.StartAuthentication\]\(Args: \[User:\s+'([0-9]+)'\], CustomerID\s+=\s+'(-?[0-9]+)', InteractionInfo = 'Complete ID\s*:\s*'([0-9]+)',\s*Interaction ID\s*:\s*'([0-9]+)'",
                         true, true,
                         new []{ 
                             new LogPatternMember(1, "LocalStartTime", typeof(DateTime)), 
                             new LogPatternMember(2, "Thread", typeof(string)), 
-                            new LogPatternMember(3, "CompleteID", typeof(long)), 
-                            new LogPatternMember(4, "InteractionID", typeof(long)),
-                            new LogPatternMember(5, "CustomerID", typeof(long)), 
-                            new LogPatternMember(6, "User", typeof(int))
+                            new LogPatternMember(3, "User", typeof(int)),
+                            new LogPatternMember(4, "CustomerID", typeof(long)), 
+                            new LogPatternMember(5, "CompleteID", typeof(long)), 
+                            new LogPatternMember(6, "InteractionID", typeof(long))
                         }
                     ),
                     new LogPattern(

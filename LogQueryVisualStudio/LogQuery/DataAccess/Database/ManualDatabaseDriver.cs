@@ -46,7 +46,7 @@ namespace LogQuery.DataAccess.Database
             }
         }
 
-        public void CretaeSchema(DataSet set)
+        public void CretaeSchema(string outputPath, DataSet set)
         {
             using (var connection = new SqlConnection(_connectionString))
             {
@@ -57,7 +57,7 @@ namespace LogQuery.DataAccess.Database
 
                     connection.Open();
 
-                    foreach (var query in _queryGenerator.GenerateCreateQuery(set).Select(s => s.Replace("\r\n", " ")))
+                    foreach (var query in _queryGenerator.GenerateCreateQuery(outputPath, set).Select(s => s.Replace("\r\n", " ")))
                     {
                         command.CommandText = query;
                         command.ExecuteNonQuery();

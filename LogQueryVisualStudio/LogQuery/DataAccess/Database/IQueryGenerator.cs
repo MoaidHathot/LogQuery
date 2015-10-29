@@ -8,7 +8,7 @@ namespace LogQuery.DataAccess.Database
 {
     public interface IQueryGenerator
     {
-        string[] GenerateCreateQuery(DataSet set, bool createDatabaseIfNotExists, bool createTablesIfNotExists, bool useGo);
+        string[] GenerateCreateQuery(string outputFileName, DataSet set, bool createDatabaseIfNotExists, bool createTablesIfNotExists, bool useGo);
         string[] GenerateCreateQuery(string database, DataTable table, bool createIfNotExists, bool useGo);
     }
 }

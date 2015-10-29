@@ -8,6 +8,8 @@ using LogQuery.DataAccess.Log;
 using LogQuery.DataAccess.Database;
 using LogQuery.DataAccess.Configuration;
 using LogQuery.Properties;
+using System.IO;
+using System.Reflection;
 
 namespace LogQuery.Logic
 {
@@ -21,6 +23,9 @@ namespace LogQuery.Logic
         protected string[] LogConfigurationFiles { get { return _logConfigurationFiles; } }
         protected IDatabaseDriver DatabaseDriver { get { return _dbDriver; } }
         protected string Name { get { return _name; } }
+        public string OutputDirectory { get; set; }
+        public string DatabaseFullName { get; set; }
+
         protected string[] LogFiles { get { return _logFiles; } }
 
         public LogQueryEngine(string name, string connectionString, string[] logFiles, string[] logConfiguraitonFiles)
@@ -113,7 +118,10 @@ namespace LogQuery.Logic
 
         protected virtual void CreateSchema(DataSet set)
         {
-            _dbDriver.CretaeSchema(set);
+            OutputDirectory = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location));
+            DatabaseFullName = Path.Combine(OutputDirectory, set.Namespace + ".mdf");
+
+            _dbDriver.CretaeSchema(DatabaseFullName, set);
         }
 
         protected virtual DataSet CreateDataSet(string name, IEnumerable<LogPatternConfiguration> configuraitons)
